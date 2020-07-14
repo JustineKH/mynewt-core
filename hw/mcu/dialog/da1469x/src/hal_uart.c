@@ -306,7 +306,7 @@ hal_uart_start_tx(int port)
 
     __HAL_ENABLE_INTERRUPTS(primask);
 }
-
+#include "console/console.h"
 void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
@@ -408,7 +408,7 @@ hal_uart_init(int port, void *arg)
         ((cfg->pin_cts >= 0) && (gpiofunc[3] == 0))) {
         return SYS_ENOTSUP;
     }
-
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
     uart->regs = regs;
     uart->irqn = irqn;
 
@@ -425,8 +425,7 @@ hal_uart_init(int port, void *arg)
         mcu_gpio_set_pin_function(cfg->pin_cts, MCU_GPIO_MODE_INPUT, gpiofunc[3]);
     }
 
-    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
-
+//    console_printf("open init\n");
     NVIC_DisableIRQ(irqn);
     NVIC_SetPriority(irqn, (1 << __NVIC_PRIO_BITS) - 1);
     NVIC_SetVector(irqn, (uint32_t)isr);
@@ -443,7 +442,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     uint32_t reg;
     uint32_t baudrate_cfg;
     uint32_t loop_count;
-
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
     uart = da1469x_uart_resolve(port);
     if (!uart) {
         return SYS_EINVAL;
@@ -555,7 +554,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     NVIC_EnableIRQ(uart->irqn);
 
     da1469x_uart_rx_intr_enable(uart);
-
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+//    console_printf("open cfg\n");
     return 0;
 }
 
@@ -592,6 +592,7 @@ hal_uart_close(int port)
         mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT,
                                   uart->rx_pin_func);
     }
-
+    da1469x_pd_release(MCU_PD_DOMAIN_COM);
+//    console_printf("close\n");
     return 0;
 }

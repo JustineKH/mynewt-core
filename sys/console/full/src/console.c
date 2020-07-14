@@ -1238,12 +1238,14 @@ console_line_queue_set(struct os_eventq *evq)
 void
 console_line_event_put(struct os_event *ev)
 {
+#if MYNEWT_VAL(CONSOLE_UART)
     os_eventq_put(&avail_queue, ev);
 
     if (rx_stalled) {
         rx_stalled = false;
         console_rx_restart();
     }
+#endif
 }
 
 void
