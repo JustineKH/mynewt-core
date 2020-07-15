@@ -442,7 +442,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     uint32_t reg;
     uint32_t baudrate_cfg;
     uint32_t loop_count;
-    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+//    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
     uart = da1469x_uart_resolve(port);
     if (!uart) {
         return SYS_EINVAL;
@@ -554,7 +554,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     NVIC_EnableIRQ(uart->irqn);
 
     da1469x_uart_rx_intr_enable(uart);
-    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+
 //    console_printf("open cfg\n");
     return 0;
 }
@@ -593,6 +593,6 @@ hal_uart_close(int port)
                                   uart->rx_pin_func);
     }
     da1469x_pd_release(MCU_PD_DOMAIN_COM);
-//    console_printf("close\n");
+
     return 0;
 }

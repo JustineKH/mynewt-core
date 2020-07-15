@@ -75,9 +75,10 @@ da1469x_sleep(os_time_t ticks)
     if (!ret) {
         /* We were not sleeping, no need to apply PD_SYS settings again */
         da1469x_pd_acquire_noconf(MCU_PD_DOMAIN_SYS);
+//        NVIC_SystemReset();
         return;
     }
-
+//    NVIC_SystemReset();
 #if MYNEWT_VAL(MCU_DCDC_ENABLE)
     da1469x_prail_dcdc_restore();
 #endif

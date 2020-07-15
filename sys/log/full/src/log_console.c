@@ -86,6 +86,9 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
 static int
 log_console_append(struct log *log, void *buf, int len)
 {
+    if (!console_is_init()) {
+        return (0);
+    }
     int hdr_len;
 
     hdr_len = log_hdr_len(buf);

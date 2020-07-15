@@ -59,6 +59,10 @@ inc_and_wrap(int i, int max)
 static void
 uart_console_ring_add_char(struct console_ring *cr, char ch)
 {
+    if (!uart_console_is_init())
+    {
+        return;
+    }
     cr->buf[cr->head] = ch;
     cr->head = inc_and_wrap(cr->head, cr->size);
 }
@@ -89,7 +93,10 @@ static void
 uart_console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 {
     int sr;
-
+    if (!uart_console_is_init())
+    {
+        return;
+    }
     if (((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) ||
 	((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_SUSPENDED) != 0)) {
         return;
@@ -145,7 +152,10 @@ void
 uart_console_non_blocking_mode(void)
 {
     int sr;
-
+    if (!uart_console_is_init())
+    {
+        return;
+    }
     OS_ENTER_CRITICAL(sr);
     if (write_char_cb) {
         write_char_cb = uart_console_queue_char;
@@ -156,6 +166,10 @@ uart_console_non_blocking_mode(void)
 int
 console_out_nolock(int c)
 {
+    if (!uart_console_is_init())
+    {
+        return 0;
+    }
     /* Assure that there is a write cb installed; this enables to debug
      * code that is faulting before the console was initialized.
      */
@@ -189,6 +203,10 @@ console_rx_restart(void)
 static int
 uart_console_tx_char(void *arg)
 {
+    if (!uart_console_is_init())
+    {
+        return 0;
+    }
     if (uart_console_ring_is_empty(&cr_tx)) {
         return -1;
     }
@@ -201,6 +219,10 @@ uart_console_tx_char(void *arg)
 static int
 uart_console_rx_char(void *arg, uint8_t byte)
 {
+    if (!uart_console_is_init())
+    {
+        return 0;
+    }
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
     if (uart_console_ring_is_full(&cr_rx)) {
         uart_console_rx_stalled = true;
@@ -223,6 +245,10 @@ uart_console_rx_char(void *arg, uint8_t byte)
 static void
 uart_console_rx_char_event(struct os_event *ev)
 {
+    if (!uart_console_is_init())
+    {
+        return;
+    }
     static int b = -1;
     int sr;
     int ret;
