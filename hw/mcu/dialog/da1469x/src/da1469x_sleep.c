@@ -31,7 +31,9 @@
 extern int da1469x_m33_sleep(void) __attribute__((naked));
 
 uint8_t g_mcu_pdc_combo_idx;
-
+static uint32_t g_sleep_count = 0;
+static uint32_t g_tick_count = 0;
+static uint32_t g_block_count = 0;
 static bool g_mcu_wait_for_jtag;
 static os_time_t g_mcu_wait_for_jtag_until;
 
@@ -60,7 +62,16 @@ da1469x_sleep(os_time_t ticks)
 
     da1469x_pdc_ack_all_m33();
 
-    if (da1469x_sleep_is_blocked() || ticks < 3) {
+    if (da1469x_sleep_is_blocked() || ticks < 2) {
+        if (ticks < 2){
+            g_tick_count++;
+        if(ticks == 0)
+        {
+            g_block_count++;
+        }}
+        else{
+//            g_block_count++;
+        }
         __DSB();
         __WFI();
         return;
@@ -70,6 +81,7 @@ da1469x_sleep(os_time_t ticks)
     da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS);
 
     mcu_gpio_enter_sleep();
+
     ret = da1469x_m33_sleep();
     mcu_gpio_exit_sleep();
     if (!ret) {
@@ -84,7 +96,7 @@ da1469x_sleep(os_time_t ticks)
 #endif
 
     da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
-
+    g_sleep_count++;
     /*
      * If PDC entry for "combo" wakeup is pending, but none of CMAC2SYS, WKUP
      * or VBUS is pending it means we were woken up from JTAG. We need to block

@@ -90,6 +90,9 @@ int g_os_started;
  *
  * @param arg unused
  */
+static int g_countxyz = 0;
+#define NUM_XDC 1000
+os_time_t g_ticks_till_next[NUM_XDC];
 void
 os_idle_task(void *arg)
 {
@@ -133,6 +136,17 @@ os_idle_task(void *arg)
         sticks = os_sched_wakeup_ticks(now);
         cticks = os_callout_wakeup_ticks(now);
         iticks = min(sticks, cticks);
+        if(g_countxyz < NUM_XDC)
+        {
+            g_ticks_till_next[g_countxyz] = cticks;
+            g_countxyz++;
+        }
+        else
+        {
+            g_countxyz = 0;
+            g_ticks_till_next[g_countxyz] = cticks;
+            g_countxyz++;
+        }
 
         /*
          * Need to wake up on time for next sanity check. Make sure next sanity

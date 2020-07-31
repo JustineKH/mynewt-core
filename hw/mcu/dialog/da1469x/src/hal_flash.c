@@ -317,6 +317,11 @@ da1469x_hff_read(const struct hal_flash *dev, uint32_t address, void *dst,
         return -1;
     }
 
+    if (!(QSPIC->QSPIC_CTRLMODE_REG & QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk))
+    {
+        da1469x_qspi_mode_auto(dev);
+    }
+
     address += MCU_MEM_QSPIF_M_START_ADDRESS;
 
     memcpy(dst, (void *)address, num_bytes);
@@ -346,6 +351,11 @@ da1469x_hff_write(const struct hal_flash *dev, uint32_t address,
 {
     uint8_t buf[ MYNEWT_VAL(QSPI_FLASH_READ_BUFFER_SIZE) ];
     uint32_t chunk_len;
+
+    if (!(QSPIC->QSPIC_CTRLMODE_REG & QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk))
+    {
+        da1469x_qspi_mode_auto(dev);
+    }
 
     /* We can write directly if 'src' is outside flash memory, otherwise we
      * need to read data to RAM first and then write to flash.
@@ -426,5 +436,6 @@ static int
 #if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
     da1469x_hff_mcu_custom_init(dev);
 #endif
+    QSPIC->QSPIC_CTRLMODE_REG &= ~QSPIC_QSPIC_CTRLMODE_REG_QSPIC_CLK_MD_Msk;
     return 0;
 }

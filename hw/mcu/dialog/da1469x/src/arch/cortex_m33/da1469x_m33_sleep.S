@@ -64,6 +64,7 @@ da1469x_m33_sleep_state:
     .equ QSPIC_CTRLBUS_OFFSET,      0x000
     .equ QSPIC_CTRLMOD_OFFSET,      0x004
     .equ QSPIC_WRITEDATA_OFFSET,    0x018
+    .equ POWER_CTRL_REG,            0x500000F0
 
     .equ SCB_CPACR_MASK,            0x00F00000  /* CP10 and CP11 */
     .equ SCB_SHCSR_MASK,            0x000F0000  /* xxxFAULTENA */
@@ -115,9 +116,20 @@ da1469x_m33_sleep:
 #endif
 
 /* Clear RESET_STAT_REG so wakeup handler can detect wakeup from deep sleep */
-    ldr     r0, =RESET_STAT_REG
-    movs    r3, #0
-    str     r3, [r0, #0]
+
+    ldr     r0, =QSPIC_BASE
+    ldr     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    bic     r1, r1, #1      /* Clear automode */
+    orr     r1, r1, #0x3c   /* Set IO2/IO3 DAT and OEN */
+    str     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    mov     r1, #1          /* Set single */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #8          /* Enable CS */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #0xff       /* Exit QPI mode */
+    strb    r1, [r0, #(QSPIC_WRITEDATA_OFFSET)]
+    mov     r1, #16         /* Disable CS */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
 
 /* Disable QSPI controller clock */
     ldr     r0, =CLK_AMBA_REG
@@ -149,7 +161,31 @@ da1469x_m33_sleep:
     orr     r1, r1, #0x1000
     str     r1, [r2, #0]
 
-    b       da1469x_m33_restore
+/*
+ * Flash is likely in QPI mode but QSPIC assumes it is in single mode so we
+ * should make sure both are in sync by forcing exit from QPI mode and then
+ * re-enter it. We need to do this before we start executing code from flash
+ * again.
+ */
+    ldr     r0, =QSPIC_BASE
+    ldr     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    bic     r1, r1, #1      /* Clear automode */
+    orr     r1, r1, #0x3c   /* Set IO2/IO3 DAT and OEN */
+    str     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    mov     r1, #1          /* Set single */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #8          /* Enable CS */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #0xff       /* Exit QPI mode */
+    strb    r1, [r0, #(QSPIC_WRITEDATA_OFFSET)]
+    mov     r1, #16         /* Disable CS */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    mov     r1, #4          /* Set quad */
+    str     r1, [r0, #(QSPIC_CTRLBUS_OFFSET)]
+    ldr     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
+    bic     r1, r1, #0xc    /* Clear IO2/IO3 OEN */
+    orr     r1, r1, #1      /* Enable automode */
+    str     r1, [r0, #(QSPIC_CTRLMOD_OFFSET)]
 
     .section .text_ram
     .thumb
@@ -209,6 +245,7 @@ da1469x_m33_wakeup:
     ldr     r1, [r0, #0]
     orr     r1, r1, #0x1000
     str     r1, [r0, #0]
+    ldr     r0, =QSPIC_BASE
 
 /*
  * Flash is likely in QPI mode but QSPIC assumes it is in single mode so we
