@@ -48,6 +48,7 @@ int da1469x_pd_acquire(uint8_t pd);
 int da1469x_pd_acquire_noconf(uint8_t pd);
 int da1469x_pd_release(uint8_t pd);
 int da1469x_pd_release_nowait(uint8_t pd);
+int get_ref_count(uint8_t pd);
 
 #ifdef __cplusplus
 }

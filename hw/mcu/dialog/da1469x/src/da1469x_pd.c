@@ -119,6 +119,13 @@ da1469x_pd_init(void)
     return 0;
 }
 
+int get_ref_count(uint8_t pd)
+{
+    struct da1469x_pd_data *pdd;
+    pdd = &g_da1469x_pd_data[pd];
+    return pdd->refcnt;
+}
+
 static int
 da1469x_pd_acquire_internal(uint8_t pd, bool load)
 {
