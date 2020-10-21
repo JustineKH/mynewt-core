@@ -61,6 +61,7 @@ da1469x_sleep(os_time_t ticks)
 {
     int slept;
     bool can_sleep = true;
+    bool sys_sleep = false;
 
     da1469x_pdc_ack_all_m33();
 
@@ -78,15 +79,21 @@ da1469x_sleep(os_time_t ticks)
             return;
         }
     }
+    if (da1469x_pd_get_ref_cnt(MCU_PD_DOMAIN_SYS) == 1) {
+        /* Must enter mcu gpio sleep before releasing MCU_PD_DOMAIN_SYS */
+        mcu_gpio_enter_sleep();
+        sys_sleep = true;
+    }
 
-    /* Must enter mcu gpio sleep before releasing MCU_PD_DOMAIN_SYS */
-    mcu_gpio_enter_sleep();
 
     /* PD_SYS will not be disabled here until we enter deep sleep, so don't wait */
     da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS);
 
     slept = da1469x_m33_sleep();
-    mcu_gpio_exit_sleep();
+
+    if (sys_sleep) {
+        mcu_gpio_exit_sleep();
+    }
 
     if (g_da1469x_sleep_cb.exit_sleep) {
         g_da1469x_sleep_cb.exit_sleep(slept);
