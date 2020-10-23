@@ -478,8 +478,8 @@ mcu_gpio_enter_sleep(void)
 
     da1469x_retreg_update(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
 
-    CRG_TOP->P0_PAD_LATCH_REG = 0x0000;
-    CRG_TOP->P1_PAD_LATCH_REG = 0x00000;
+    CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
+    CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
 
     da1469x_pd_release(MCU_PD_DOMAIN_COM);
 #endif
@@ -498,9 +498,6 @@ mcu_gpio_exit_sleep(void)
     da1469x_retreg_restore(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
 
     /* Set pins states to their latched values */
-    GPIO->P0_DATA_REG = GPIO->P0_DATA_REG;
-    GPIO->P1_DATA_REG = GPIO->P1_DATA_REG;
-
     CRG_TOP->P0_PAD_LATCH_REG = g_mcu_gpio_latch_state[0];
     CRG_TOP->P1_PAD_LATCH_REG = g_mcu_gpio_latch_state[1];
 #endif
